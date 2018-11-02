@@ -6,13 +6,17 @@ import glob
 import json
 from scipy.io import loadmat
 from collections import defaultdict
+import pdb
 
 all_obj = 0
 data = defaultdict(dict)
 for dname in sorted(glob.glob('data/annotations/set*')):
+    # fix directory name as dname
+    pdb.set_trace()
     set_name = os.path.basename(dname)
     data[set_name] = defaultdict(dict)
     for anno_fn in sorted(glob.glob('{}/*.vbb'.format(dname))):
+        # fix annotation name as ann_fn
         vbb = loadmat(anno_fn)
         nFrame = int(vbb['A'][0][0][0][0][0])
         objLists = vbb['A'][0][0][1][0]
