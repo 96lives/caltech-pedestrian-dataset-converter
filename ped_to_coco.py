@@ -6,13 +6,15 @@ import os
 import cv2
 import json, yaml
 import numpy as np
+import glob
 from PIL import Image
 from collections import OrderedDict
 from pycocotools import mask as cocomask
 from pycocotools import coco as cocoapi
+from scipy.io import loadmat
 
 SET_INDEX = [
-    "01", "02", "03", "04", "05"
+    "00", "01", "02", "03", "04", "05"
     "06", "07", "08", "09", "10"
 ]
 
@@ -21,7 +23,7 @@ class Pedestrian():
     """
         Caltech Pedestrian data class to convert annotations to COCO Json format
     """
-    def __init__(self, datapath, imageres="480p"):
+    def __init__(self, datapath="./data/annotations/", imageres="480p"):
         self.info = {"year" : 2009,
                      "version" : "1.0",
                      "description" : "Dataset for pedestrain",
@@ -39,21 +41,16 @@ class Pedestrian():
         self.seqs = yaml.load(open(os.path.join(self.datapath, "Annotations", "db_info.yml"),
                                    "r")
                              )["sequences"]
-        '''
         self.categories = [{"id": seqId+1, "name": seq["name"], "supercategory": seq["name"]}
                               for seqId, seq in enumerate(self.seqs)]
+        [{'id': 1, 'name': 'bear', 'supercategory': 'bear'}, {...}, ...   ]
         self.cat2id = {cat["name"]: catId+1 for catId, cat in enumerate(self.categories)}
-
+        {"bear": 1, "blackswan": 2, ...}
         '''
         for s in SET_INDEX:
-            imlist = np.genfromtxt(os.path.join(self.datapath,
-        '''
-
-
-        '''
-        for s in ["train", "trainval", "val"]:
-            imlist = np.genfromtxt( os.path.join(self.datapath, "ImageSets", imageres, s + ".txt"), dtype=str)
-            images, annotations = self.__get_image_annotation_pairs__(imlist)
+            set_dir = os.path.join(self.datapath, "set"+s)
+            imlist = os.listdir(set_dir)
+            images, annotations = self.get_image_annotation_pairs(set_dir)
             json_data = {"info" : self.info,
                          "images" : images,
                          "licenses" : self.licenses,
@@ -61,10 +58,35 @@ class Pedestrian():
                          "annotations" : annotations,
                          "categories" : self.categories}
 
-            with open(os.path.join(self.datapath, "Annotations", imageres + "_" +
-                                   s+".json"), "w") as jsonfile:
+            with open(os.path.join(set_dir, "set{}.json".format(s)), "w") as jsonfile:
                 json.dump(json_data, jsonfile, sort_keys=True, indent=4)
-        '''
+
+
+    def get_image_annotation_pairs(self, set_dir):
+        images = []
+        annotations = []
+
+        for anno_fn in sorted(glob.glob('{}/*.vbb'.format(set_dir))):
+            images.append({"date_captured" : "2016",
+                           "file_name" : impath[1:], # remove "/"
+                           "id" : imId+1,
+                           "license" : 1,
+                           "url" : "",
+                           "height" : mask.shape[0],
+                           "width" : mask.shape[1]})
+            vbb = loadmat(anno_fn)
+            nFrame = int(vbb['A'][0][0][0][0][0]) # number of frames
+            objLists = vbb['A'][0][0][1][0]
+            '''
+            objLists[fn][0]: contains data of certain objects in frame 'fn'
+            objLists[fn][0][0]: contains data of one object in frame 'fn'
+            objLists[fn][0][0][1][0]: array of [x, y, w, h]
+            '''
+
+
+        pass
+
+
     def __get_image_annotation_pairs__(self, image_set):
         images = []
         annotations = []
@@ -95,8 +117,8 @@ class Pedestrian():
         return images, annotations
 
 if __name__ == "__main__":
-    datapath = "/work/datasets/DAVIS-2016/"
-    DAVIS2016(datapath)
+    datapath = "./data/annotations"
+    Pedestrian(datapath)
 
     # test
     from PIL import Image

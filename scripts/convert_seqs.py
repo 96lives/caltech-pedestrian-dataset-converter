@@ -6,9 +6,10 @@ import glob
 import cv2 as cv
 import pdb
 
-def save_img(out_dir_set, fn, i, frame):
-    cv.imwrite('{}/{}_{}.jpg'.format(
-        out_dir_set, os.path.basename(fn).split('.')[0], i),
+def save_img(out_dir_set, dname, fn, i, frame):
+    cv.imwrite('{}/{}_{}_{}.jpg'.format(
+        out_dir_set, os.path.basename(dname),
+        os.path.basename(fn).split('.')[0], i),
         frame)
 
 out_dir = 'data/images'
