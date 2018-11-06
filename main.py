@@ -1,7 +1,13 @@
-import json
-import cv2
+import yaml
 import pdb
+import cv2
+import json
+import os
+from convert_seqs import convert_seqs
+from ped_to_coco import Pedestrian
 
+
+# test
 def get_bboxes(data, img_name):
     imgs = data["images"]
     img_id = 0
@@ -13,7 +19,19 @@ def get_bboxes(data, img_name):
     bboxes = [x["bbox"] for x in annos if x["id"]==img_id]
     return bboxes
 
+
 if __name__ == "__main__":
+
+    config_path = "./config.yaml"
+    data_path = "./data"
+    config = yaml.load(open(config_path))
+    print("Converting videos...")
+    convert_seqs(os.path.join(data_path, "images"), config)
+    print("Finished converting videos!")
+    print("Converting annotations...")
+    Pedestrian(data_path, config)
+    print("Finished converting annotations!")
+    '''
     json_dir = "./data/annotations/train.json"
     img_dir = "./data/images/train/set01_V004_00000.jpg"
     img_name = img_dir.split("/")[4]
@@ -30,5 +48,4 @@ if __name__ == "__main__":
     cv2.imshow("", img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-
-
+    '''

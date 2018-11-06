@@ -7,6 +7,7 @@ import cv2
 import json, yaml
 import pdb
 import glob
+import yaml
 from PIL import Image
 from collections import OrderedDict
 from pycocotools import mask as cocomask
@@ -14,11 +15,9 @@ from pycocotools import coco as cocoapi
 from scipy.io import loadmat
 from collections import defaultdict
 
-TRAIN_SET= [0, 1, 2, 3, 4, 5, 6]
-TEST_SET = [7, 8, 9, 10]
-
 class Pedestrian():
-    def __init__(self, datapath):
+    def __init__(self, data_path, config):
+
         self.info = {"year" : 2009,
                      "version" : "1.0",
                      "description" : "Dataset for pedestrain",
@@ -31,25 +30,30 @@ class Pedestrian():
                           "url": "http://creativecommons.org/licenses/by-nc-sa/2.0/"
                          }]
         self.type = "instances"
-        self.datapath = datapath
+        self.data_path = data_path
         self.categories = [{"id": 1, "name": "person", "supercategory": "person"}]
         self.cat2id = {"person": 1}
 
-        for s in ["train"]: # Later add train
-            images = self._get_images(os.path.join(self.datapath, "images", s))
-            annotations = self._get_annotation(os.path.join(self.datapath, "annotations"), s)
-            json_data = {"info" : self.info,
+        for s in ["train", "test"]: # Later add train
+            images = self._get_images(os.path.join(self.data_path, "images", s))
+            annotations = self._get_annotation(os.path.join(self.data_path, "annotations"), s, config)
+            json_data = {"info": self.info,
                          "images" : images,
                          "licenses" : self.licenses,
                          "type" : self.type,
                          "annotations" : annotations,
-                         "categories" : self.categories}
-            with open(os.path.join(self.datapath, "annotations", s+".json"), "w") as jsonfile:
+                         "categories" : self.categories
+                         }
+            annotation_dir = os.path.join(self.data_path, "annotations")
+            if not os.path.exists(annotation_dir):
+                os.mkdir(annotation_dir)
+            with open(os.path.join(annotation_dir, s+".json"), "w") as jsonfile:
                 json.dump(json_data, jsonfile, sort_keys=True, indent=4)
-
 
     def _get_images(self, img_dir):
         file_names = sorted(os.listdir(img_dir))
+        if len(os.listdir(img_dir)) == 0:
+            return []
         w, h = self._get_img_size(img_dir, file_names[0])
         return self._img_list_to_dict(img_dir, file_names, w, h)
 
@@ -73,12 +77,12 @@ class Pedestrian():
             id_cnt += 1
         return res
 
-    def _get_annotation(self, anno_dir ,mode):
+    def _get_annotation(self, anno_dir ,mode, config):
         dirs = None
         if mode == "test":
-            dirs = TEST_SET
+            dirs = config["TEST_SET"]
         else:
-            dirs = TRAIN_SET
+            dirs = config["TRAIN_SET"]
         res = []
         total_frame_cnt = 1
         annotations = []
@@ -108,38 +112,4 @@ class Pedestrian():
                                         "category_id" : 1,
                                         "id": frame_id + total_frame_cnt})
         return annotations
-
-
-# test
-def get_bboxes(data, img_name):
-    imgs = data["images"]
-    img_id = 0
-    for img_dic in imgs:
-        if img_dic["file_name"] == img_name:
-            img_id = img_dic["id"]
-            break
-    annos = data["annotations"]
-    bboxes = [x["bbox"] for x in annos if x["id"]==img_id]
-    return bboxes
-
-if __name__ == "__main__":
-
-    datapath = "./data/"
-    Pedestrian(datapath)
-    json_dir = "./data/annotations/train.json"
-    img_dir = "./data/images/train/set01_V004_00000.jpg"
-    img_name = img_dir.split("/")[4]
-    img = cv2.imread(img_dir)
-    with open(json_dir) as f:
-        data = json.load(f)
-    bboxes = get_bboxes(data, img_name)
-    for bbox in bboxes:
-        x = int(bbox[0])
-        y = int(bbox[1])
-        w = int(bbox[2])
-        h = int(bbox[3])
-        cv2.rectangle(img,(x,y),(x+w,y+h), (255,0,0), 2)
-    cv2.imshow("", img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
 
