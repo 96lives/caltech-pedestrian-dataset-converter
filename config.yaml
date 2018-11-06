@@ -1,6 +1,3 @@
+TEST_SET: []
+TRAIN_SET: []
 
-# TRAIN_SET: [0, 1, 2, 3, 4, 5]
-# TEST_SET: [6, 7, 8, 9 , 10]
-
-TRAIN_SET: [1]
-TEST_SET: [0, 1]

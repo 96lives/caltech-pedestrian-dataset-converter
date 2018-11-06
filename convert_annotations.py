@@ -8,6 +8,7 @@ import json, yaml
 import pdb
 import glob
 import yaml
+import pdb
 from PIL import Image
 from collections import OrderedDict
 from pycocotools import mask as cocomask
@@ -31,7 +32,9 @@ class Pedestrian():
                          }]
         self.type = "instances"
         self.data_path = data_path
-        self.categories = [{"id": 1, "name": "person", "supercategory": "person"}]
+        with open("categories.json") as json_data:
+            self.categories = json.load(json_data)["categories"]
+        #self.categories = [{"id": 1, "name": "person", "supercategory": "person"}]
         self.cat2id = {"person": 1}
 
         for s in ["train", "test"]: # Later add train
