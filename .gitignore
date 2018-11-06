@@ -6,6 +6,6 @@
 *.png
 *.seq
 *.vbb
-
+__pycache__
 data
 plots
