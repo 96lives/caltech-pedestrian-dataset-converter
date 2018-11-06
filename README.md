@@ -11,12 +11,10 @@ Caltech Pedestrian Dataset Converter
 # Caltech Pedestrian Dataset
 
 ```
-$ bash shells/download.sh
-$ python scripts/convert_annotations.py
-$ python scripts/convert_seqs.py
+$ sh download_and_convert.sh
 ```
 
-Each `.seq` movie is separated into `.png` images. Each image's filename is consisted of `{set**}_{V***}_{frame_num}.png`. According to [the official site](http://www.vision.caltech.edu/Image_Datasets/CaltechPedestrians/), `set06`~`set10` are for test dataset, while the rest are for training dataset.
+Each `.seq` movie is separated into `.jpg` images. Each image's filename is consisted of `{set**}_{V***}_{frame_num}.jpg`. According to [the official site](http://www.vision.caltech.edu/Image_Datasets/CaltechPedestrians/), `set06`~`set10` are for test dataset, while the rest are for training dataset. The `.seq.` is donwnloaded at `./data` directory and the converted images are in `./data/images` directory, divided into `test` and `train` folders. You can split your own `test` and `train` by modifying the `./config.yaml`. The coco-format converted annotation is stored at `./data/annotations`.
 
 (Number of objects: 346621)
 
