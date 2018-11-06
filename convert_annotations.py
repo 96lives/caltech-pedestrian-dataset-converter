@@ -4,19 +4,16 @@
 import os
 import glob
 import json
+import pdb
 from scipy.io import loadmat
 from collections import defaultdict
-import pdb
 
 all_obj = 0
 data = defaultdict(dict)
 for dname in sorted(glob.glob('data/annotations/set*')):
-    # fix directory name as dname
-    pdb.set_trace()
     set_name = os.path.basename(dname)
     data[set_name] = defaultdict(dict)
     for anno_fn in sorted(glob.glob('{}/*.vbb'.format(dname))):
-        # fix annotation name as ann_fn
         vbb = loadmat(anno_fn)
         nFrame = int(vbb['A'][0][0][0][0][0])
         objLists = vbb['A'][0][0][1][0]
@@ -50,6 +47,7 @@ for dname in sorted(glob.glob('data/annotations/set*')):
                     occl = int(occl[0][0])
                     lock = int(lock[0][0])
                     posv = posv[0].tolist()
+                    pdb.set_trace()
 
                     datum = dict(zip(keys, [id, pos, occl, lock, posv]))
                     datum['lbl'] = str(objLbl[datum['id']])
@@ -66,3 +64,4 @@ for dname in sorted(glob.glob('data/annotations/set*')):
 
 print('Number of objects:', all_obj)
 json.dump(data, open('data/annotations.json', 'w'))
+

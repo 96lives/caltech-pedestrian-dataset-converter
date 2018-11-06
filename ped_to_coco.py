@@ -5,25 +5,20 @@ from __future__ import print_function
 import os
 import cv2
 import json, yaml
-import numpy as np
+import pdb
 import glob
 from PIL import Image
 from collections import OrderedDict
 from pycocotools import mask as cocomask
 from pycocotools import coco as cocoapi
 from scipy.io import loadmat
+from collections import defaultdict
 
-SET_INDEX = [
-    "00", "01", "02", "03", "04", "05"
-    "06", "07", "08", "09", "10"
-]
-
+TRAIN_SET= [0, 1, 2, 3, 4, 5, 6]
+TEST_SET = [7, 8, 9, 10]
 
 class Pedestrian():
-    """
-        Caltech Pedestrian data class to convert annotations to COCO Json format
-    """
-    def __init__(self, datapath="./data/annotations/", imageres="480p"):
+    def __init__(self, datapath):
         self.info = {"year" : 2009,
                      "version" : "1.0",
                      "description" : "Dataset for pedestrain",
@@ -37,90 +32,114 @@ class Pedestrian():
                          }]
         self.type = "instances"
         self.datapath = datapath
-        '''
-        self.seqs = yaml.load(open(os.path.join(self.datapath, "Annotations", "db_info.yml"),
-                                   "r")
-                             )["sequences"]
-        self.categories = [{"id": seqId+1, "name": seq["name"], "supercategory": seq["name"]}
-                              for seqId, seq in enumerate(self.seqs)]
-        [{'id': 1, 'name': 'bear', 'supercategory': 'bear'}, {...}, ...   ]
-        self.cat2id = {cat["name"]: catId+1 for catId, cat in enumerate(self.categories)}
-        {"bear": 1, "blackswan": 2, ...}
-        '''
-        for s in SET_INDEX:
-            set_dir = os.path.join(self.datapath, "set"+s)
-            imlist = os.listdir(set_dir)
-            images, annotations = self.get_image_annotation_pairs(set_dir)
+        self.categories = [{"id": 1, "name": "person", "supercategory": "person"}]
+        self.cat2id = {"person": 1}
+
+        for s in ["train"]: # Later add train
+            images = self._get_images(os.path.join(self.datapath, "images", s))
+            annotations = self._get_annotation(os.path.join(self.datapath, "annotations"), s)
             json_data = {"info" : self.info,
                          "images" : images,
                          "licenses" : self.licenses,
                          "type" : self.type,
                          "annotations" : annotations,
                          "categories" : self.categories}
-
-            with open(os.path.join(set_dir, "set{}.json".format(s)), "w") as jsonfile:
+            with open(os.path.join(self.datapath, "annotations", s+".json"), "w") as jsonfile:
                 json.dump(json_data, jsonfile, sort_keys=True, indent=4)
 
 
-    def get_image_annotation_pairs(self, set_dir):
-        images = []
+    def _get_images(self, img_dir):
+        file_names = sorted(os.listdir(img_dir))
+        w, h = self._get_img_size(img_dir, file_names[0])
+        return self._img_list_to_dict(img_dir, file_names, w, h)
+
+    def _get_img_size(self, img_dir, img_name):
+        img = Image.open(os.path.join(img_dir, img_name))
+        w, h = img.size
+        img.close()
+        return w, h
+
+    def _img_list_to_dict(self, img_dir, file_names, w, h):
+        id_cnt = 1
+        res = []
+        for f in file_names:
+            res.append({"date_captured" : "2009",
+                        "file_name" : f,
+                        "id" : id_cnt,
+                        "license" : 1,
+                        "url" : "",
+                        "height" : h,
+                        "width" : w})
+            id_cnt += 1
+        return res
+
+    def _get_annotation(self, anno_dir ,mode):
+        dirs = None
+        if mode == "test":
+            dirs = TEST_SET
+        else:
+            dirs = TRAIN_SET
+        res = []
+        total_frame_cnt = 1
         annotations = []
+        for set_num in dirs:
+            set_dir = os.path.join(anno_dir, "set"+str(set_num).zfill(2))
+            for anno_fn in sorted(glob.glob('{}/*.vbb'.format(set_dir))):
+                vbb = loadmat(anno_fn)
+                nFrame = int(vbb['A'][0][0][0][0][0]) # number of frames
+                objLists = vbb['A'][0][0][1][0]
+                annots = self.get_bboxes(objLists, total_frame_cnt)
+                annotations.extend(annots)
+                total_frame_cnt += nFrame
+        return annotations
 
-        for anno_fn in sorted(glob.glob('{}/*.vbb'.format(set_dir))):
-            images.append({"date_captured" : "2016",
-                           "file_name" : impath[1:], # remove "/"
-                           "id" : imId+1,
-                           "license" : 1,
-                           "url" : "",
-                           "height" : mask.shape[0],
-                           "width" : mask.shape[1]})
-            vbb = loadmat(anno_fn)
-            nFrame = int(vbb['A'][0][0][0][0][0]) # number of frames
-            objLists = vbb['A'][0][0][1][0]
-            '''
-            objLists[fn][0]: contains data of certain objects in frame 'fn'
-            objLists[fn][0][0]: contains data of one object in frame 'fn'
-            objLists[fn][0][0][1][0]: array of [x, y, w, h]
-            '''
-
-
-        pass
-
-
-    def __get_image_annotation_pairs__(self, image_set):
-        images = []
+    def get_bboxes(self, objLists, total_frame_cnt):
         annotations = []
-        for imId, paths in enumerate(image_set):
-            impath, annotpath = paths[0], paths[1]
-            print (impath)
-            name = impath.split("/")[3]
-            img = np.array(Image.open(os.path.join(self.datapath + impath)).convert('RGB'))
-            mask = np.array(Image.open(os.path.join(self.datapath + annotpath)).convert('L'))
-            if np.all(mask == 0):
-                continue
+        for frame_id, obj in enumerate(objLists):
+            if len(obj) > 0:
+                for id, pos, occl, lock, posv in zip(
+                        obj['id'][0], obj['pos'][0], obj['occl'][0],
+                        obj['lock'][0], obj['posv'][0]):
+                    annotations.append({"segmentation": [],
+                                        "area": 0,
+                                        "iscrowd": 0,
+                                        "image_id" : frame_id + total_frame_cnt,
+                                        "bbox" : pos.tolist()[0],
+                                        "category_id" : 1,
+                                        "id": frame_id + total_frame_cnt})
+        return annotations
 
-            segmentation, bbox, area = self.__get_annotation__(mask, img)
-            images.append({"date_captured" : "2016",
-                           "file_name" : impath[1:], # remove "/"
-                           "id" : imId+1,
-                           "license" : 1,
-                           "url" : "",
-                           "height" : mask.shape[0],
-                           "width" : mask.shape[1]})
-            annotations.append({"segmentation" : segmentation,
-                                "area" : np.float(area),
-                                "iscrowd" : 0,
-                                "image_id" : imId+1,
-                                "bbox" : bbox,
-                                "category_id" : self.cat2id[name],
-                                "id": imId+1})
-        return images, annotations
+
+# test
+def get_bboxes(data, img_name):
+    imgs = data["images"]
+    img_id = 0
+    for img_dic in imgs:
+        if img_dic["file_name"] == img_name:
+            img_id = img_dic["id"]
+            break
+    annos = data["annotations"]
+    bboxes = [x["bbox"] for x in annos if x["id"]==img_id]
+    return bboxes
 
 if __name__ == "__main__":
-    datapath = "./data/annotations"
-    Pedestrian(datapath)
 
-    # test
-    from PIL import Image
-    from pycocotools import coco; c = coco.COCO(datapath+'/Annotations/480p_trainval.json')
-    Image.fromarray(c.annToMask(c.loadAnns([255])[0])*255).show()
+    datapath = "./data/"
+    Pedestrian(datapath)
+    json_dir = "./data/annotations/train.json"
+    img_dir = "./data/images/train/set01_V004_00000.jpg"
+    img_name = img_dir.split("/")[4]
+    img = cv2.imread(img_dir)
+    with open(json_dir) as f:
+        data = json.load(f)
+    bboxes = get_bboxes(data, img_name)
+    for bbox in bboxes:
+        x = int(bbox[0])
+        y = int(bbox[1])
+        w = int(bbox[2])
+        h = int(bbox[3])
+        cv2.rectangle(img,(x,y),(x+w,y+h), (255,0,0), 2)
+    cv2.imshow("", img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
