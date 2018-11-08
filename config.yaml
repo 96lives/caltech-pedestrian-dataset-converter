@@ -1,11 +1,19 @@
 caltech_pedestrian:
-  seq_dir: "./data/seqs/caltech_pedestrian"
-  vbb_dir: "./data/vbb/caltech_pedestrian"
-  img_dir: "./data/images/caltech_pedestrian"
-  ann_dir: "./data/annotations/caltech_pedestrian"
+  seq_dir: "./data/caltech_pedestrian/seq"
+  vbb_dir: "./data/caltech_pedestrian/vbb"
+  img_dir: "./data/caltech_pedestrian/images"
+  ann_dir: "./data/caltech_pedestrian/annotations"
+  # seq_dir: "./data/seqs/caltech_pedestrian"
+  # vbb_dir: "./data/vbb/caltech_pedestrian"
+  # img_dir: "./data/images/caltech_pedestrian"
+  # ann_dir: "./data/annotations/caltech_pedestrian"
+
 
 kaist_pedestrian:
-  vbb_dir: "./data/vbb/kaist_pedestrian"
-  img_dir: "./data/images/kaist_pedestrian"
-  ann_dir: "./data/annotations/kaist_pedestrian"
+  vbb_dir: "./data/kaist_pedestrian/vbb"
+  img_dir: "./data/kaist_pedestrian/images"
+  ann_dir: "./data/kaist_pedestrian/annotations"
+  # vbb_dir: "./data/vbb/kaist_pedestrian"
+  # img_dir: "./data/images/kaist_pedestrian"
+  # ann_dir: "./data/annotations/kaist_pedestrian"
 

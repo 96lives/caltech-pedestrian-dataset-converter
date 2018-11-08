@@ -4,7 +4,7 @@ import cv2
 import json
 import os
 from convert_seqs import convert_seqs
-from convert_annotations import DataConverter
+from convert_annotations import VBBConverter
 import argparse
 
 # test
@@ -32,12 +32,10 @@ if __name__ == "__main__":
     args = get_args()
     config = yaml.load(open(args.config))
     print("Converting videos...")
-    convert_seqs(args.dataset, config)
+    #convert_seqs(args.dataset, config)
     print("Finished converting videos!")
     print("Converting annotations...")
-    import pdb
-    pdb.set_trace()
-    DataConverter(args.dataset, config)
+    VBBConverter(args.dataset, config)
     print("Finished converting annotations!")
     '''
     json_dir = "./data/annotations/train.json"

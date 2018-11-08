@@ -1,25 +1,11 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-'''
-set 00~06: train set
-set 07~10: test set
-'''
-
 import os
-import glob
 import cv2
+from glob import glob
 
 def save_img(frame, out_dir, file_name, frame_num):
     full_file_name = os.path.join(out_dir, file_name + '_' + \
                                   str(frame_num).zfill(6) + ".jpg")
     cv2.imwrite(full_file_name, frame)
-
-'''
-def save_img(out_dir_set, set_name, file_name, frame_num ,frame):
-    cv.imwrite('{}/{}_{}_{}.jpg'.format(
-        out_dir_set, set_name, file_name, str(frame_num).zfill(5)),
-        frame)
-'''
 
 def convert_seqs(dataset, config):
     config = config[dataset]
@@ -27,12 +13,12 @@ def convert_seqs(dataset, config):
     img_dir = config["img_dir"]
 
     img_cnt = 1
-    for dname in sorted(glob.glob(os.path.join(seq_dir, "set*"))):
+    for dname in sorted(glob(os.path.join(seq_dir, "set*"))):
         set_name = dname.split("/")[-1]
         out_dir = os.path.join(img_dir, set_name)
         os.makedirs(out_dir, exist_ok=True)
 
-        for fn in sorted(glob.glob('{}/*.seq'.format(dname))):
+        for fn in sorted(glob('{}/*.seq'.format(dname))):
             file_name = fn.split('/')[-1].split(".")[0]
             cap = cv2.VideoCapture(fn)
             frame_num = 0
