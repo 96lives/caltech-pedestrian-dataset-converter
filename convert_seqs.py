@@ -22,16 +22,15 @@ def save_img(out_dir_set, set_name, file_name, frame_num ,frame):
 '''
 
 def convert_seqs(dataset, config):
-
+    config = config[dataset]
     seq_dir = config["seq_dir"]
     img_dir = config["img_dir"]
-    os.makedirs(img_dir, exist_ok=True)
 
     img_cnt = 1
     for dname in sorted(glob.glob(os.path.join(seq_dir, "set*"))):
-        set_name = dname.split("/")[1]
+        set_name = dname.split("/")[-1]
         out_dir = os.path.join(img_dir, set_name)
-        os.makedirs(out_dir_set, exist_ok=True)
+        os.makedirs(out_dir, exist_ok=True)
 
         for fn in sorted(glob.glob('{}/*.seq'.format(dname))):
             file_name = fn.split('/')[-1].split(".")[0]
@@ -41,6 +40,6 @@ def convert_seqs(dataset, config):
                 ret, frame = cap.read()
                 if not ret:
                     break
-                save_img(frame, out_dir, file_name, fram_num)
+                save_img(frame, out_dir, file_name, frame_num)
                 frame_num += 1
             print(fn)

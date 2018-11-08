@@ -4,7 +4,7 @@ import cv2
 import json
 import os
 from convert_seqs import convert_seqs
-from ped_to_coco import DataConverter
+from convert_annotations import DataConverter
 import argparse
 
 # test
@@ -35,6 +35,8 @@ if __name__ == "__main__":
     convert_seqs(args.dataset, config)
     print("Finished converting videos!")
     print("Converting annotations...")
+    import pdb
+    pdb.set_trace()
     DataConverter(args.dataset, config)
     print("Finished converting annotations!")
     '''

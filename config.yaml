@@ -1,5 +1,5 @@
 caltech_pedestrian:
-  seq_dir: "./data/seq/caltech_pedestrian"
+  seq_dir: "./data/seqs/caltech_pedestrian"
   vbb_dir: "./data/vbb/caltech_pedestrian"
   img_dir: "./data/images/caltech_pedestrian"
   ann_dir: "./data/annotations/caltech_pedestrian"
