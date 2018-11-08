@@ -23,7 +23,7 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", \
                         choices=["caltech_pedestrian", "kaist_pedestrian"],
-                        default="caltech_pedestrian")
+                        default="kaist_pedestrian")
     parser.add_argument("--config", default="./config.yaml")
     return parser.parse_args()
 
@@ -31,9 +31,9 @@ if __name__ == "__main__":
 
     args = get_args()
     config = yaml.load(open(args.config))
-    print("Converting videos...")
+    #print("Converting videos...")
     #convert_seqs(args.dataset, config)
-    print("Finished converting videos!")
+    #print("Finished converting videos!")
     print("Converting annotations...")
     VBBConverter(args.dataset, config)
     print("Finished converting annotations!")

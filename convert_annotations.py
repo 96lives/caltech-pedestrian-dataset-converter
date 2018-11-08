@@ -26,7 +26,7 @@ class VBBConverter():
         for set_dir in sorted(glob(os.path.join(vbb_dir, "set*"))):
             set_name = set_dir.split("/")[-1]
             images = self._get_images(img_dir, set_name)
-            annotations = self._get_annotation(set_dir)
+            self._get_annotation(set_dir)
             json_data = self._get_json_format()
             with open(os.path.join(ann_dir, set_name + ".json"), "w") as jsonfile:
                 json.dump(json_data, jsonfile, sort_keys=True, indent=4)
@@ -91,30 +91,19 @@ class VBBConverter():
             annotations.extend(annots)
             total_frame_cnt += nFrame
         self.annotations = annotations
-        '''
-        for set_num in dirs:
-            set_dir = os.path.join(anno_dir, "set"+str(set_num).zfill(2))
-            for anno_fn in sorted(glob.glob('{}/*.vbb'.format(set_dir))):
-                vbb = loadmat(anno_fn)
-                nFrame = int(vbb['A'][0][0][0][0][0]) # number of frames
-                objLists = vbb['A'][0][0][1][0]
-                annots = self._get_bboxes(objLists, total_frame_cnt)
-                annotations.extend(annots)
-                total_frame_cnt += nFrame'''
 
     def _get_bboxes(self, objLists, total_frame_cnt):
         annotations = []
         for frame_id, obj in enumerate(objLists):
-            if len(obj) > 0:
-                for id, pos, occl, lock, posv in zip(
-                        obj['id'][0], obj['pos'][0], obj['occl'][0],
-                        obj['lock'][0], obj['posv'][0]):
-                    annotations.append({
+            obj = obj[0]
+            for bbox in obj:
+                bbox = bbox[1]
+                annotations.append({
                         "segmentation": [],
                         "area": 0,
                         "iscrowd": 0,
                         "image_id" : frame_id + total_frame_cnt,
-                        "bbox" : pos.tolist()[0],
+                        "bbox" : bbox.tolist()[0],
                         "category_id" : 1,
                         "id": frame_id + total_frame_cnt
                     })
@@ -129,23 +118,19 @@ class VBBConverter():
                 "annotations" : self.annotations,
                 "categories" : self.categories
          }
-
-
-
 '''
-        for s in ["train", "test"]:
-            images = self._get_images(os.path.join(self.data_path, "images", s))
-            annotations = self._get_annotation(os.path.join(self.data_path, "annotations"), s, config)
-            json_data = {
-                "info": self.info,
-                "images" : images,
-                "licenses" : self.licenses,
-                "type" : self.type,
-                "annotations" : annotations,
-                "categories" : self.categories
-            }
-            annotation_dir = os.path.join(self.data_path, "annotations")
-            if not os.path.exists(annotation_dir):
-                os.mkdir(annotation_dir)
-            with open(os.path.join(annotation_dir, s+".json"), "w") as jsonfile:
-                '''
+        for frame_id, obj in enumerate(objLists):
+            if len(obj) > 0:
+                for id, pos, occl, lock, posv in zip(
+                        obj['id'][0], obj['pos'][0], obj['occl'][0],
+                        obj['lock'][0], obj['posv'][0]):
+                    annotations.append({
+                        "segmentation": [],
+                        "area": 0,
+                        "iscrowd": 0,
+                        "image_id" : frame_id + total_frame_cnt,
+                        "bbox" : pos.tolist()[0],
+                        "category_id" : 1,
+                        "id": frame_id + total_frame_cnt
+                    })'''
+
