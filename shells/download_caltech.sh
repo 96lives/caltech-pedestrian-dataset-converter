@@ -3,9 +3,20 @@
 if [ ! -d data ]; then
     mkdir data
 fi
-cd data
+if [ ! -d data/caltech_pedestrian ]; then
+    mkdir data/caltech_pedstrian
+fi
+cd data/caltech_pedstrian
 
 wget http://www.vision.caltech.edu/Image_Datasets/CaltechPedestrians/datasets/USA/annotations.zip
+unzip annotations.zip
+mv annotations vbb
+rm -rf annotations.zip
+if [ ! -d seq ]; then
+    mkdir seq
+fi
+cd seq
+
 wget http://www.vision.caltech.edu/Image_Datasets/CaltechPedestrians/datasets/USA/set00.tar 
 wget http://www.vision.caltech.edu/Image_Datasets/CaltechPedestrians/datasets/USA/set01.tar
 wget http://www.vision.caltech.edu/Image_Datasets/CaltechPedestrians/datasets/USA/set02.tar
@@ -17,9 +28,6 @@ wget http://www.vision.caltech.edu/Image_Datasets/CaltechPedestrians/datasets/US
 wget http://www.vision.caltech.edu/Image_Datasets/CaltechPedestrians/datasets/USA/set08.tar
 wget http://www.vision.caltech.edu/Image_Datasets/CaltechPedestrians/datasets/USA/set09.tar
 wget http://www.vision.caltech.edu/Image_Datasets/CaltechPedestrians/datasets/USA/set10.tar
-
-unzip annotations.zip
-rm -rf annotations.zip
 
 tar xvf set00.tar
 rm -rf set00.tar
