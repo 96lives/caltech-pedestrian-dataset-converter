@@ -16,8 +16,8 @@ from pycocotools import coco as cocoapi
 from scipy.io import loadmat
 from collections import defaultdict
 
-class Pedestrian():
-    def __init__(self, data_path, config):
+class DataConverter():
+    def __init__(self, dataset, config):
 
         self.info = {"year" : 2009,
                      "version" : "1.0",
@@ -34,19 +34,19 @@ class Pedestrian():
         self.data_path = data_path
         with open("categories.json") as json_data:
             self.categories = json.load(json_data)["categories"]
-        #self.categories = [{"id": 1, "name": "person", "supercategory": "person"}]
-        self.cat2id = {"person": 1}
+        self.cat2id = {"person": 1, "people": 2}
 
         for s in ["train", "test"]: # Later add train
             images = self._get_images(os.path.join(self.data_path, "images", s))
             annotations = self._get_annotation(os.path.join(self.data_path, "annotations"), s, config)
-            json_data = {"info": self.info,
-                         "images" : images,
-                         "licenses" : self.licenses,
-                         "type" : self.type,
-                         "annotations" : annotations,
-                         "categories" : self.categories
-                         }
+            json_data = {
+                "info": self.info,
+                "images" : images,
+                "licenses" : self.licenses,
+                "type" : self.type,
+                "annotations" : annotations,
+                "categories" : self.categories
+            }
             annotation_dir = os.path.join(self.data_path, "annotations")
             if not os.path.exists(annotation_dir):
                 os.mkdir(annotation_dir)

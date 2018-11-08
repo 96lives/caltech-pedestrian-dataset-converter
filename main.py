@@ -4,8 +4,8 @@ import cv2
 import json
 import os
 from convert_seqs import convert_seqs
-from ped_to_coco import Pedestrian
-
+from ped_to_coco import DataConverter
+import argparse
 
 # test
 def get_bboxes(data, img_name):
@@ -19,17 +19,23 @@ def get_bboxes(data, img_name):
     bboxes = [x["bbox"] for x in annos if x["id"]==img_id]
     return bboxes
 
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset", \
+                        choices=["caltech_pedestrian", "kaist_pedestrian"],
+                        default="caltech_pedestrian")
+    parser.add_argument("--config", default="./config.yaml")
+    return parser.parse_args()
 
 if __name__ == "__main__":
 
-    config_path = "./config.yaml"
-    data_path = "./data"
-    config = yaml.load(open(config_path))
+    args = get_args()
+    config = yaml.load(open(args.config))
     print("Converting videos...")
-    convert_seqs(os.path.join(data_path, "images"), config)
+    convert_seqs(args.dataset, config)
     print("Finished converting videos!")
     print("Converting annotations...")
-    Pedestrian(data_path, config)
+    DataConverter(args.dataset, config)
     print("Finished converting annotations!")
     '''
     json_dir = "./data/annotations/train.json"
