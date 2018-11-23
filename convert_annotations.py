@@ -3,6 +3,7 @@ import cv2
 import json, yaml
 import pdb
 import yaml
+import random
 from shutil import copyfile
 from PIL import Image
 from glob import glob
@@ -49,7 +50,8 @@ class VBBConverter():
         self.type = "instances"
         self.annotations = []
         self.images = []
-        self.id_cnt = 1
+        self.img_id_cnt = 1
+        self.ann_id_cnt = 1
         self.w = 640
         self.h = 512
 
@@ -66,6 +68,9 @@ class VBBConverter():
             obj_lists = vbb['A'][0][0][1][0]
             obj_lbl = [str(v[0]) for v in vbb['A'][0][0][4][0]]
             for frame_id, objs in enumerate(obj_lists):
+                ran_num = random.random()
+                if ran_num >= 0.02:
+                    continue
                 labels_exist = False
                 bboxes = []
                 for obj in objs[0]:
@@ -75,12 +80,13 @@ class VBBConverter():
                         "segmentation": [],
                         "area": 0,
                         "iscrowd": 0,
-                        "image_id" : self.id_cnt,
-                        "bbox" : bbox.tolist()[0],
+                        "image_id" : self.img_id_cnt,
+                        "bbox" : bbox.tolist(),
                         "category_id" : self.cat2id[category],
-                        "id": self.id_cnt
+                        "id": self.ann_id_cnt
                     })
                     labels_exist = True
+                    self.ann_id_cnt += 1
                 if labels_exist:
                     vbb_name = anno_fn.split('/')[-1].split('.')[0]
                     old_file_name = vbb_name + '_I' + str(frame_id).zfill(5)+'.jpg'
@@ -88,7 +94,7 @@ class VBBConverter():
                     self.images.append({
                                 "date_captured" : "2009",
                                 "file_name" : new_file_name,
-                                "id" : self.id_cnt,
+                                "id" : self.img_id_cnt,
                                 "license" : 1,
                                 "url" : "",
                                 "height" : self.h,
@@ -97,7 +103,7 @@ class VBBConverter():
                     img_path = os.path.join(self.img_dir, set_name, old_file_name)
                     out_path = os.path.join(self.img_save_path, new_file_name)
                     copyfile(img_path, out_path)
-                    self.id_cnt += 1
+                    self.img_id_cnt += 1
 
 
     def _get_json_format(self):
