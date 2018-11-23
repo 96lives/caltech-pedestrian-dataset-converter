@@ -25,7 +25,7 @@ class VBBConverter():
 
         for set_dir in sorted(glob(os.path.join(vbb_dir, "set*"))):
             set_name = set_dir.split("/")[-1]
-            images = self._get_images(img_dir, set_name)
+            self._get_images(img_dir, set_name)
             self._get_annotation(set_dir)
             json_data = self._get_json_format()
             with open(os.path.join(ann_dir, set_name + ".json"), "w") as jsonfile:
