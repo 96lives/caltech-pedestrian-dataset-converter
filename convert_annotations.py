@@ -7,7 +7,11 @@ from PIL import Image
 from glob import glob
 from scipy.io import loadmat
 
+TRAIN_SET = ["set00", "set01", "set02", "set03", "set04", "set05"]
+TEST_SET = ["set06", "set07", "set08", "set09", "set10", "set11"]
+
 class VBBConverter():
+
     def __init__(self, dataset, config):
         config = config[dataset]
         vbb_dir = config["vbb_dir"]
@@ -22,14 +26,12 @@ class VBBConverter():
         os.makedirs(ann_dir, exist_ok=True)
         self._set_basic_info()
         self._set_categories()
+        self._get_images(img_dir)
 
         for set_dir in sorted(glob(os.path.join(vbb_dir, "set*"))):
-            set_name = set_dir.split("/")[-1]
-            images = self._get_images(img_dir, set_name)
             self._get_annotation(set_dir)
-            json_data = self._get_json_format()
-            with open(os.path.join(ann_dir, set_name + ".json"), "w") as jsonfile:
-                json.dump(json_data, jsonfile, sort_keys=True, indent=4)
+        with open(os.path.join(ann_dir, set_name + ".json"), "w") as jsonfile:
+            json.dump(self._get_json_format(), jsonfile, sort_keys=True, indent=4)
 
     def _set_basic_info(self):
         self.info = {"year" : 2009,
@@ -44,19 +46,21 @@ class VBBConverter():
                           "url": "http://creativecommons.org/licenses/by-nc-sa/2.0/"
                          }]
         self.type = "instances"
+        self.name2id = {}
+        self.images = []
+        self.annotations = []
 
     def _set_categories(self):
-        with open("categories.json") as json_data:
+        with open("kaist_categories.json") as json_data:
             self.categories = json.load(json_data)["categories"]
-        self.cat2id = {"person": 1, "people": 2}
+            self.cat2id = {"person": 1, "person?": 2, "people": 3, "cyclist": 4}
 
-    def _get_images(self, img_dir, set_name):
-        img_dir = os.path.join(img_dir, set_name)
+    def _get_images(self, img_dir):
         file_names = sorted(os.listdir(img_dir))
         if len(os.listdir(img_dir)) == 0:
             return []
         w, h = self._get_img_size(img_dir, file_names[0])
-        self.images =  self._img_list_to_dict(img_dir, file_names, w, h)
+        self.images.extend(self._img_list_to_dict(img_dir, file_names, w, h))
 
     def _get_img_size(self, img_dir, img_name):
         img = Image.open(os.path.join(img_dir, img_name))
@@ -77,35 +81,62 @@ class VBBConverter():
                 "height" : h,
                 "width" : w
             })
+            self.name2id[f]=id_cnt
             id_cnt += 1
         return res
 
     def _get_annotation(self, set_dir):
         total_frame_cnt = 1
-        annotations = []
-        for anno_fn in sorted(glob(os.path.join(set_dir, "*.vbb"))):
-            vbb = loadmat(anno_fn)
+        set_name = set_dir.split('/')[-1]
+        for file_name in sorted(glob(os.path.join(set_dir, "*.vbb"))):
+            vbb_name = file_name.split('/')[-1].split('.')[0]
+            vbb = loadmat(file_name)
             nFrame = int(vbb['A'][0][0][0][0][0]) # number of frames
-            objLists = vbb['A'][0][0][1][0]
-            annots = self._get_bboxes(objLists, total_frame_cnt)
-            annotations.extend(annots)
-            total_frame_cnt += nFrame
-        self.annotations = annotations
+            obj_lists = vbb['A'][0][0][1][0]
+            obj_lbl = [str(v[0]) for v in vbb['A'][0][0][4][0]]
+            for frame_id, objs in enumerate(obj_lists):
+                bboxes = []
+                for obj in objs[0]:
+                    bbox = [obj_lbl[obj[0][0][0]-1]] # add class name to bbox
+                    bbox.append(obj[1][0]) # add x, y, w, h to bbox
+                    bboxes.append(bbox)
+                    vbb_name = file_name.split('/')[-1].split('.')[0]
+                    img_name = set_name+'_'+vbb_name + '_I' + str(frame_id).zfill(5)+'.jpg'
+                    import pdb
+                    pdb.set_trace()
+                    if self.name2id.get(img_name) is None:
+                        continue
+                    self.annotations.append({
+                            "segmentation": [],
+                            "area": 0,
+                            "iscrowd": 0,
+                            "image_id" : self.name2id[img_name],
+                            "bbox" : obj[1][0].tolist(),
+                            "category_id" : self.cat2id[obj_lbl[obj[0][0][0]-1]],
+                            "id": self.name2id[img_name]
+                        })
 
-    def _get_bboxes(self, objLists, total_frame_cnt):
+
+    def _get_bboxes(self, set_name, vbb_name, objLists, obj_lbl, total_frame_cnt):
         annotations = []
+        cnt = 0
         for frame_id, obj in enumerate(objLists):
             obj = obj[0]
             for bbox in obj:
                 bbox = bbox[1]
+                name = set_name+'_'+vbb_name+'_I'+str(cnt).zfill(5)+'.jpg'
+                if self.name2id.get(name) is None:
+                    continue
+                import pdb
+                pdb.set_trace()
                 annotations.append({
                         "segmentation": [],
                         "area": 0,
                         "iscrowd": 0,
-                        "image_id" : frame_id + total_frame_cnt,
+                        "image_id" : self.name2id[name],
                         "bbox" : bbox.tolist()[0],
-                        "category_id" : 1,
-                        "id": frame_id + total_frame_cnt
+                        "category_id" : self.cat2id[obj_lbl[bbox[0][0][0]-1]],
+                        "id": self.name2id[name]
                     })
         return annotations
 
@@ -118,19 +149,4 @@ class VBBConverter():
                 "annotations" : self.annotations,
                 "categories" : self.categories
          }
-'''
-        for frame_id, obj in enumerate(objLists):
-            if len(obj) > 0:
-                for id, pos, occl, lock, posv in zip(
-                        obj['id'][0], obj['pos'][0], obj['occl'][0],
-                        obj['lock'][0], obj['posv'][0]):
-                    annotations.append({
-                        "segmentation": [],
-                        "area": 0,
-                        "iscrowd": 0,
-                        "image_id" : frame_id + total_frame_cnt,
-                        "bbox" : pos.tolist()[0],
-                        "category_id" : 1,
-                        "id": frame_id + total_frame_cnt
-                    })'''
 
