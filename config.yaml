@@ -10,9 +10,9 @@ caltech_pedestrian:
 
 
 kaist_pedestrian:
-  vbb_dir: "./data/kaist_pedestrian/vbb"
-  img_dir: "./data/kaist_pedestrian/images"
-  ann_dir: "./data/kaist_pedestrian/annotations"
+  vbb_dir: "/data1/dszhang/kaist_pedestrian/vbb/train"
+  img_dir: "/data1/dszhang/kaist_pedestrian/images/train"
+  ann_dir: "/data1/dszhang/kaist_pedestrian/annotations"
   # vbb_dir: "./data/vbb/kaist_pedestrian"
   # img_dir: "./data/images/kaist_pedestrian"
   # ann_dir: "./data/annotations/kaist_pedestrian"

@@ -1,0 +1,24 @@
+{
+    "categories": [
+        {
+            "supercategory": "person",
+            "id": 1,
+            "name": "person"
+        },
+        {
+            "supercategory": "person?",
+            "id": 2,
+            "name": "person?"
+        },
+        {
+            "supercategory": "people",
+            "id": 3,
+            "name": "people"
+        },
+        {
+            "supercategory": "cyclist",
+            "id": 4,
+            "name": "cyclist"
+        }
+    ]
+}
